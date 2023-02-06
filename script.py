@@ -1,4 +1,7 @@
-from flask import Flask, jsonify, request, redirect
+import csv
+import io
+import pandas as pd
+from flask import Flask, jsonify, request, redirect, Response
 from flask.helpers import url_for
 from flask_pymongo import PyMongo
 from flask_cors import CORS, cross_origin
@@ -45,6 +48,17 @@ def updateData(name):
     updatedName = request.json['name']
     currentCollection.update_one({'name':name}, {"$set" : {'name' : updatedName}})
     return redirect(url_for('retrieveAll'))
+
+@app.route("/api/users/export", methods=["GET"])
+def export_users_api():
+    users = list(collection.find())
+    df = pd.DataFrame(users)
+    csv = df.to_csv(index=False)
+    return Response(
+        csv,
+        mimetype="text/csv",
+        headers={"Content-disposition": "attachment; filename=users.csv"}
+    )
 
 if __name__ == '__main__':
     app.run(debug = True)
