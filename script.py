@@ -12,6 +12,8 @@ app.config['MONGO_URI'] = 'mongodb+srv://vaibhav:vaibpasswd@cluster0.vgsxvy5.mon
 app.config['CORS_Headers'] = 'Content-Type'
 mongo = PyMongo(app)
 
+# see all data
+
 @app.route('/', methods = ['GET'])
 def retrieveAll():
     holder = list()
@@ -20,12 +22,16 @@ def retrieveAll():
         holder.append({'name':i['name'], 'password' : i['password'], 'role' : i['role']})
     return jsonify(holder)
 
+# see one data
+
 @app.route('/<name>', methods = ['GET'])
 @cross_origin()
 def retrieveFromName(name):
     currentCollection = mongo.db.user
     data = currentCollection.find_one({"name" : name})
     return jsonify({'name' : data['name'], 'password' : data['password'], 'role' : data['role']})
+
+# add data
 
 @app.route('/postData', methods = ['POST'])
 def postData():
@@ -36,11 +42,15 @@ def postData():
     currentCollection.insert({'name' : name, 'password' : password, 'role' : role})
     return jsonify({'name' : name, 'password' : password, 'role' : role})
 
+# delete data
+
 @app.route('/deleteData/<name>', methods = ['DELETE'])
 def deleteData(name):
     currentCollection = mongo.db.user
     currentCollection.delete_one({'name' : name})
     return redirect(url_for('retrieveAll'))
+
+# update data
 
 @app.route('/update/<name>', methods = ['PUT'])
 def updateData(name):
@@ -48,6 +58,16 @@ def updateData(name):
     updatedName = request.json['name']
     currentCollection.update_one({'name':name}, {"$set" : {'name' : updatedName}})
     return redirect(url_for('retrieveAll'))
+
+# Pagination
+
+@app.route("/api/users", methods=["GET"])
+def get_user_list_api():
+    page_number = int(request.args.get("page", 1))
+    users = get_user_list(page_number)
+    return {"users": users}, 200
+
+# Convert to CSV
 
 @app.route("/api/users/export", methods=["GET"])
 def export_users_api():
